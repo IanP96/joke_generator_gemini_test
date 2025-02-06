@@ -134,6 +134,25 @@ async function getJokeText(chat) {
     return jokeText;
 }
 
+function isLetter(str) {
+    return str.length === 1 && !!str.match(/[a-z]/i);
+}
+
+class InputField {
+
+    node;
+    expectedChar;
+
+    constructor(node, expectedChar) {
+        this.node = node;
+        this.expectedChar = expectedChar.toLowerCase();
+    }
+
+    correctInput() {
+        return this.node.value.toLowerCase() === this.expectedChar;
+    }
+}
+
 // Only try to access DOM elements once loading complete (avoid null exceptions)
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -142,24 +161,71 @@ document.addEventListener("DOMContentLoaded", function () {
     const jokeBtn = document.getElementById("joke-btn");
 
     let status = GameStatus.NOT_STARTED;
+    let inputFields = [];
 
     function enableBtn(enable) {
         jokeBtn.disabled = !enable;
     }
 
     async function fillJoke(chat) {
+        setupPara.innerHTML = "Loading the next joke...";
+        punchlineDiv.innerHTML = "";
+        punchlineDiv.classList.add("hidden");
         const jokeText = await getJokeText(chat);
         const sentenceIndex = Math.min(
             ...[".", "?", "!"]
             .map(punc => jokeText.indexOf(punc))
             .filter(index => index !== -1)
         ) + 1;
+
         const setup = jokeText.substring(0, sentenceIndex);
         console.log(`setup: ${setup}`);
+        setupPara.innerHTML = setup;
+
         const punchline = jokeText.substring(sentenceIndex + 1);
         console.log(`punchline: ${punchline}`);
-        setupPara.innerHTML = setup;
-        punchlineDiv.innerHTML = punchline;
+        const words = punchline.split(" ");
+        let inputCount = 0;
+        for (let i = 0; i < words.length; i++) {
+            if (i !== 0) {
+                punchlineDiv.innerHTML += " ";
+            }
+            const word = words[i];
+            if (word.length >= 4 && !COMMON_WORDS.includes(word.toLowerCase())) {
+                // Fill in first letter of word, then input fields
+                punchlineDiv.innerHTML += word[0];
+                for (let char of word.substring(1)) {
+                    if (!isLetter(char)) {
+                        punchlineDiv.innerHTML += char;
+                        continue;
+                    }
+                    const field = document.createElement("input");
+                    field.type = "text";
+                    field.maxLength = 1;
+                    field.size = 1;
+                    field.id = `input-${inputCount}`;
+                    inputCount++;
+                    field.addEventListener("input", event => console.log("Pre event"));
+                    punchlineDiv.appendChild(field);
+                    inputFields.push(new InputField(field, char));
+                }
+            } else {
+                punchlineDiv.innerHTML += word;
+            }
+        }
+
+        console.log(inputFields);
+        inputFields[0].node.autofocus = true;
+        // when character is inputted, go to next input field
+        for (let i = 0; i < inputCount - 1; i++) {
+            const field = document.getElementById(`input-${i}`);
+            field.addEventListener("input", () => {
+                console.log("input event triggered");
+                document.getElementById(`input-${i + 1}`).focus();
+            });
+        }
+
+        // punchlineDiv.innerHTML = punchline;
         punchlineDiv.classList.remove("hidden");
     }
 
@@ -171,7 +237,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 enableBtn(true);
                 status = GameStatus.JOKE_GIVEN;
                 break;
-        
             default:
                 // won't be reached
                 break;
