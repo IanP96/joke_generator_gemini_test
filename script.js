@@ -115,14 +115,14 @@ import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
     Limit the entire response to a maximum of 80 words.`;
     const chat = model.startChat({
         history: []
-      });
+    });
       
-      let result = await chat.sendMessage(prompt);
-      let text = result.response.text()
-      console.log(text);
-      document.writeln(text);
-      let result2 = await chat.sendMessage(prompt);
-       text = result2.response.text()
-      console.log(text);
-      document.writeln(text);
+    let result = await chat.sendMessage(prompt);
+    let text = result.response.text()
+    console.log(text);
+    document.writeln(text);
+    let result2 = await chat.sendMessage(prompt);
+     text = result2.response.text()
+    console.log(text);
+    document.writeln(text);
 } )();
