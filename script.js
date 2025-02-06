@@ -147,10 +147,6 @@ class InputField {
         this.node = node;
         this.expectedChar = expectedChar.toLowerCase();
     }
-
-    correctInput() {
-        return this.node.value.toLowerCase() === this.expectedChar;
-    }
 }
 
 // Only try to access DOM elements once loading complete (avoid null exceptions)
@@ -162,15 +158,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let status = GameStatus.NOT_STARTED;
     let inputFields = [];
+    let currentPunchline;
 
-    function enableBtn(enable) {
-        jokeBtn.disabled = !enable;
+    function setBtn(visible, title, focus) {
+        if (visible) {
+            jokeBtn.classList.remove("hidden");
+        } else {
+            jokeBtn.classList.add("hidden");
+        }
+        if (title !== undefined) {
+            jokeBtn.innerHTML = title;
+        }
+        if (focus) {
+            jokeBtn.focus();
+        }
     }
 
     async function fillJoke(chat) {
+
         setupPara.innerHTML = "Loading the next joke...";
         punchlineDiv.innerHTML = "";
+        inputFields = [];
         punchlineDiv.classList.add("hidden");
+
         const jokeText = await getJokeText(chat);
         const sentenceIndex = Math.min(
             ...[".", "?", "!"]
@@ -193,10 +203,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const word = words[i];
             if (word.length >= 4 && !COMMON_WORDS.includes(word.toLowerCase())) {
                 // Fill in first letter of word, then input fields
-                punchlineDiv.innerHTML += word[0];
-                for (let char of word.substring(1)) {
+                let letterFound = false;
+                for (let char of word) {
                     if (!isLetter(char)) {
                         punchlineDiv.innerHTML += char;
+                        continue;
+                    }
+                    if (!letterFound) {
+                        punchlineDiv.innerHTML += char;
+                        letterFound = true;
                         continue;
                     }
                     const field = document.createElement("input");
@@ -204,9 +219,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     field.maxLength = 1;
                     field.size = 1;
                     field.id = `input-${inputCount}`;
-                    inputCount++;
-                    field.addEventListener("input", event => console.log("Pre event"));
                     punchlineDiv.appendChild(field);
+                    inputCount++;
                     inputFields.push(new InputField(field, char));
                 }
             } else {
@@ -214,37 +228,71 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        console.log(inputFields);
-        inputFields[0].node.autofocus = true;
         // when character is inputted, go to next input field
+        document.getElementById("input-0").focus();
         for (let i = 0; i < inputCount - 1; i++) {
             const field = document.getElementById(`input-${i}`);
             field.addEventListener("input", () => {
-                console.log("input event triggered");
                 document.getElementById(`input-${i + 1}`).focus();
             });
         }
+        document.getElementById(`input-${inputCount - 1}`).addEventListener("input", () => {
+            jokeBtn.focus();
+        })
 
         // punchlineDiv.innerHTML = punchline;
         punchlineDiv.classList.remove("hidden");
+
+        currentPunchline = punchline;
+    }
+
+    function verifyAnswer() {
+        let allCorrect = true;
+        for (let i = 0; i < inputFields.length; i++) {
+            const input = document.getElementById(`input-${i}`);
+            const correct = input.value.toLowerCase() === inputFields[i].expectedChar;
+            if (correct) {
+                input.style.borderColor = "green";
+            } else {
+                input.style.borderColor = "red";
+                allCorrect = false;
+            }
+        }
+        console.log(`Answer correct: ${allCorrect}`);
+        if (!allCorrect) {
+            alert(`Incorrect, the punchline was: ${currentPunchline}`);
+        }
     }
 
     async function jokeBtnClicked(chat) {
         switch (status) {
+
             case GameStatus.NOT_STARTED:
-                enableBtn(false);
+            case GameStatus.RESULT_GIVEN:
+                setBtn(false);
                 await fillJoke(chat);
-                enableBtn(true);
+
                 status = GameStatus.JOKE_GIVEN;
+                setBtn(true, "Submit guess");
                 break;
+
+            case GameStatus.JOKE_GIVEN:
+                verifyAnswer();
+
+                status = GameStatus.RESULT_GIVEN;
+                setBtn(true, "Next joke", true);
+                break;
+
             default:
-                // won't be reached
+                // shouldn't be reached
                 break;
         }
     }
 
     ( async () => {
+        setBtn(false);
         const chat = await setupChat();
+        setBtn(true, "Generate joke", true);
         setupPara.innerHTML = "Click the button below to get started.";
         jokeBtn.addEventListener("click", () => jokeBtnClicked(chat));
     } )();
