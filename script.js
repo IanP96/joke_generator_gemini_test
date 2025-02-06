@@ -110,7 +110,7 @@ const JOKE_PROMPT = `Tell me a new joke.
     Each sentence should end with a full stop, question mark or exclamation mark.
     There should not be any full stops, question marks or exclamation marks anywhere else.
     The first sentence should be the setup and the second should be the punchline.
-    Limit the entire response to a maximum of 80 words.`;
+    Limit the entire response to a maximum of 30 words.`;
 
 const GameStatus = {
     NOT_STARTED: 0,
