@@ -111,6 +111,7 @@ import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
     const prompt = `Tell me a new joke.
     The joke should be two sentences long.
     Each sentence should end with a full stop, question mark or exclamation mark.
+    There should not be any full stops, question marks or exclamation marks anywhere else.
     The first sentence should be the setup and the second should be the punchline.
     Limit the entire response to a maximum of 80 words.`;
     const chat = model.startChat({
@@ -122,7 +123,7 @@ import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
     console.log(text);
     document.writeln(text);
     let result2 = await chat.sendMessage(prompt);
-     text = result2.response.text()
+    text = result2.response.text()
     console.log(text);
     document.writeln(text);
 } )();
