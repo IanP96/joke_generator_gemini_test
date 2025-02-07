@@ -155,10 +155,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const setupPara = document.getElementById("setup-p");
     const punchlineDiv = document.getElementById("punchline-div");
     const jokeBtn = document.getElementById("joke-btn");
+    const scorePara = document.getElementById("score-p");
 
     let status = GameStatus.NOT_STARTED;
     let inputFields = [];
     let currentPunchline;
+    let score = 0;
 
     function setBtn(visible, title, focus) {
         if (visible) {
@@ -246,6 +248,10 @@ document.addEventListener("DOMContentLoaded", function () {
         currentPunchline = punchline;
     }
 
+    function updateScoreDisplay() {
+        scorePara.innerHTML = `Score: ${score}`;
+    }
+
     function verifyAnswer() {
         let allCorrect = true;
         for (let i = 0; i < inputFields.length; i++) {
@@ -261,6 +267,9 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(`Answer correct: ${allCorrect}`);
         if (!allCorrect) {
             alert(`Incorrect, the punchline was: ${currentPunchline}`);
+        } else {
+            score++;
+            updateScoreDisplay();
         }
     }
 
