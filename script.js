@@ -134,8 +134,13 @@ async function getJokeText(chat) {
     return jokeText;
 }
 
+/**
+ * Checks if a character is a letter
+ * @param {string} str string to check, single character
+ * @returns {boolean} true if letter, false otherwise
+ */
 function isLetter(str) {
-    return str.length === 1 && !!str.match(/[a-z]/i);
+    return str.toLowerCase() !== str.toUpperCase();
 }
 
 class InputField {
