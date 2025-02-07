@@ -104,7 +104,7 @@ year
 you
 your`.split("\n");
 
-const SPLIT_REGEX = /[ \-]/
+const LETTER_REGEX = /([a-z]+)/gi;
 
 // Template literal ` ` used to allow multiline prompt
 const JOKE_PROMPT = `Tell me a new joke.
@@ -143,6 +143,62 @@ async function getJokeText(chat) {
  */
 function isLetter(str) {
     return str.toLowerCase() !== str.toUpperCase();
+}
+
+/**
+ * Count number of letters in a string
+ * @param {string} str string to check
+ * @returns number of letters in str
+ */
+function numLetters(str) {
+    let count = 0;
+    for (let char of str) {
+        if (isLetter(char)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/**
+ * Given a punchline, create a list of words that should be hidden with input fields.
+ * @param {Array<string>} words array of words in the punchline
+ * @param {number} score player's current score
+ * @returns list of words to hide
+ */
+function getWordsToHide(words, score) {
+
+    const uncommonWords = words
+    .filter(word => word.match(LETTER_REGEX) && !COMMON_WORDS.includes(word.toLowerCase()));
+    if (!uncommonWords) {
+        // No uncommon words, just return the longest one
+        console.log("No uncommon words");
+        return words.reduce((a, b) => numLetters(a) > numLetters(b) ? a : b, "");
+    }
+
+    // Calculate how many words to add by considering the length of the words and calculating a desired number of letters
+    const wordLengths = uncommonWords
+    .map(word => {return {length: numLetters(word), word}})
+    .sort((a, b) => a.length - b.length)
+    .reverse();
+    console.log(wordLengths);
+    const totalLength = wordLengths.reduce((a, b) => a + b.length, 0);
+    // starts at 0.1, tends to 1 as score increases
+    const coeff = -0.9 * 1.1 ** (-score) + 1;
+    const lengthThreshold = totalLength * coeff;
+    console.log(`length threshold: ${lengthThreshold} / ${totalLength}`);
+
+    // Populate list of words to hide, starting from longest word
+    const wordsToHide = [];
+    let totalAdded = 0;
+    for (let word of wordLengths) {
+        wordsToHide.push(word.word);
+        totalAdded += word.length;
+        if (totalAdded > lengthThreshold) {
+            break;
+        }
+    }
+    return wordsToHide;
 }
 
 class InputField {
@@ -203,14 +259,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const punchline = jokeText.substring(sentenceIndex + 1);
         console.log(`punchline: ${punchline}`);
-        const words = punchline.split(SPLIT_REGEX);
+        const words = punchline.split(LETTER_REGEX);
+        const wordsToHide = getWordsToHide(words, score);
         let inputCount = 0;
         for (let i = 0; i < words.length; i++) {
-            if (i !== 0) {
-                punchlineDiv.innerHTML += " ";
-            }
+            // if (i !== 0) {
+            //     punchlineDiv.innerHTML += " ";
+            // }
             const word = words[i];
-            if (word.length >= 4 && !COMMON_WORDS.includes(word.toLowerCase())) {
+            if (wordsToHide.includes(word)) {
                 // Fill in first letter of word, then input fields
                 let letterFound = false;
                 for (let char of word) {
