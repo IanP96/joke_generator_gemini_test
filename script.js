@@ -104,6 +104,8 @@ year
 you
 your`.split("\n");
 
+const SPLIT_REGEX = /[ \-]/
+
 // Template literal ` ` used to allow multiline prompt
 const JOKE_PROMPT = `Tell me a new joke.
     The joke should be two sentences long.
@@ -201,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const punchline = jokeText.substring(sentenceIndex + 1);
         console.log(`punchline: ${punchline}`);
-        const words = punchline.split(" ");
+        const words = punchline.split(SPLIT_REGEX);
         let inputCount = 0;
         for (let i = 0; i < words.length; i++) {
             if (i !== 0) {
