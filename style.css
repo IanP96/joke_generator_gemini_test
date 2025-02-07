@@ -57,6 +57,14 @@ h1, p, div {
     border-radius: 10px;
 }
 
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    color: darkgrey;
+}
+
 .hidden {
     display: none;
 }
