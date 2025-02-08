@@ -293,9 +293,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const wordsToHide = getWordsToHide(words, score);
         let inputCount = 0;
         for (let i = 0; i < words.length; i++) {
-            // if (i !== 0) {
-            //     punchlineDiv.innerHTML += " ";
-            // }
             const word = words[i];
             if (wordsToHide.includes(word)) {
                 // Fill in first letter of word, then input fields
@@ -339,9 +336,7 @@ document.addEventListener("DOMContentLoaded", function () {
             jokeBtn.focus();
         })
 
-        // punchlineDiv.innerHTML = punchline;
         punchlineDiv.classList.remove("hidden");
-
         currentPunchline = punchline;
     }
 
