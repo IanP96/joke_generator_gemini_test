@@ -106,7 +106,10 @@ your`.split("\n");
 
 const LETTER_REGEX = /([a-z]+)/gi;
 
-// Template literal ` ` used to allow multiline prompt
+/**
+ * Prompt given to Gemini to generate jokes.
+ * Template literal ` ` used to allow multiline prompt
+ */
 const JOKE_PROMPT = `Tell me a new joke.
     The joke should be two sentences long.
     Each sentence should end with a full stop, question mark or exclamation mark.
@@ -114,12 +117,17 @@ const JOKE_PROMPT = `Tell me a new joke.
     The first sentence should be the setup and the second should be the punchline.
     Limit the entire response to a maximum of 30 words.`;
 
+/** Different states the game can be in at any point in time */
 const GameStatus = {
     NOT_STARTED: 0,
     JOKE_GIVEN: 1,
     RESULT_GIVEN: 2
 };
 
+/**
+ * Sets up Gemini (1.5 Flash) and starts a new chat with no history
+ * @returns a new chat with no history
+ */
 async function setupChat() {
     const genAI = await new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -129,6 +137,11 @@ async function setupChat() {
     return chat;
 }
 
+/**
+ * Ask Gemini for a joke and return it
+ * @param {object} chat the current chat with Gemini
+ * @returns {string} the full text of the joke, with leading/trailing whitespace removed
+ */
 async function getJokeText(chat) {
     const result = await chat.sendMessage(JOKE_PROMPT);
     const jokeText = result.response.text().trim();
@@ -162,9 +175,11 @@ function numLetters(str) {
 
 /**
  * Given a punchline, create a list of words that should be hidden with input fields.
- * @param {Array<string>} words array of words in the punchline
+ * If no words in the punchline are uncommon, only the longet word will be hidden.
+ * If one or more words are uncommon, some portion of those words will be hidden. The portion increases as the player's score increases.
+ * @param {string[]} words array of words in the punchline
  * @param {number} score player's current score
- * @returns list of words to hide
+ * @returns {string[]} list of words to hide
  */
 function getWordsToHide(words, score) {
 
@@ -182,13 +197,14 @@ function getWordsToHide(words, score) {
     .sort((a, b) => a.length - b.length)
     .reverse();
     console.log(wordLengths);
+    /** Total length of all uncommon words */
     const totalLength = wordLengths.reduce((a, b) => a + b.length, 0);
-    // starts at 0.1, tends to 1 as score increases
+    /** starts at 0.1, tends to 1 as score increases */
     const coeff = -0.9 * 1.1 ** (-score) + 1;
     const lengthThreshold = totalLength * coeff;
     console.log(`length threshold: ${lengthThreshold} / ${totalLength}`);
 
-    // Populate list of words to hide, starting from longest word
+    // Populate list of words to hide, starting from longest word, until length threshold is reached
     const wordsToHide = [];
     let totalAdded = 0;
     for (let word of wordLengths) {
@@ -201,9 +217,14 @@ function getWordsToHide(words, score) {
     return wordsToHide;
 }
 
+/**
+ * A field where the player inputs a letter to complete the punchline
+ */
 class InputField {
 
+    /** This field's HTMLElement */
     node;
+    /** The correct character that goes in this field (in lowercase) */
     expectedChar;
 
     constructor(node, expectedChar) {
@@ -225,6 +246,12 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentPunchline;
     let score = 0;
 
+    /**
+     * Set the button's appearance, visibility and focus
+     * @param {boolean} visible whether the button should be visible
+     * @param {string} title what to set as the title of the button (optional)
+     * @param {boolean} focus whether to set focus on the button (optional)
+     */
     function setBtn(visible, title, focus) {
         if (visible) {
             jokeBtn.classList.remove("hidden");
@@ -247,6 +274,8 @@ document.addEventListener("DOMContentLoaded", function () {
         punchlineDiv.classList.add("hidden");
 
         const jokeText = await getJokeText(chat);
+
+        // Get the index of the joke string that divides it into setup and punchline
         const sentenceIndex = Math.min(
             ...[".", "?", "!"]
             .map(punc => jokeText.indexOf(punc))
@@ -257,6 +286,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(`setup: ${setup}`);
         setupPara.innerHTML = setup;
 
+        // Fill in the punchline and input fields
         const punchline = jokeText.substring(sentenceIndex + 1);
         console.log(`punchline: ${punchline}`);
         const words = punchline.split(LETTER_REGEX);
@@ -280,6 +310,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         letterFound = true;
                         continue;
                     }
+                    // Add an input field
                     const field = document.createElement("input");
                     field.type = "text";
                     field.maxLength = 1;
@@ -294,8 +325,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        // when character is inputted, go to next input field
+        // Set focus to the first input field (not working for some reason)
         document.getElementById("input-0").focus();
+
+        // when character is inputted, go to next input field
         for (let i = 0; i < inputCount - 1; i++) {
             const field = document.getElementById(`input-${i}`);
             field.addEventListener("input", () => {
@@ -312,10 +345,18 @@ document.addEventListener("DOMContentLoaded", function () {
         currentPunchline = punchline;
     }
 
+    /**
+     * Set the score label based on the current score e.g. "Score: 0"
+     */
     function updateScoreDisplay() {
         scorePara.innerHTML = `Score: ${score}`;
     }
 
+    /**
+     * Check the player's answer.
+     * If correct, add 1 to the score and display it. Colour all fields green.
+     * If incorrect, show the correct answer and show fields with an incorrect answer in red.
+     */
     function verifyAnswer() {
         let allCorrect = true;
         for (let i = 0; i < inputFields.length; i++) {
@@ -337,6 +378,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    /**
+     * To be called when the button is clicked.
+     * If the game hasn't started or an answer has already been checked, fill in a new joke.
+     * If a joke has been given, check the answer.
+     * @param {object} chat the current chat with Gemini
+     */
     async function jokeBtnClicked(chat) {
         switch (status) {
 
@@ -362,6 +409,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Code to be ran initially. Needs an async as we need to wait for the chat to be set up
     ( async () => {
         setBtn(false);
         const chat = await setupChat();
