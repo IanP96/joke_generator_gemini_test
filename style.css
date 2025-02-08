@@ -69,6 +69,10 @@ footer {
     display: none;
 }
 
+#goose {
+    opacity: 0.2;
+}
+
 @media (height > 600px) {
     main > section {
         min-height: 50vh;
