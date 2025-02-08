@@ -357,19 +357,21 @@ document.addEventListener("DOMContentLoaded", function () {
         for (let i = 0; i < inputFields.length; i++) {
             const input = document.getElementById(`input-${i}`);
             const correct = input.value.toLowerCase() === inputFields[i].expectedChar;
+            let inputFieldColour;
             if (correct) {
-                input.style.borderColor = "green";
+                inputFieldColour = "green";
             } else {
-                input.style.borderColor = "red";
+                inputFieldColour = "red";
                 allCorrect = false;
             }
+            input.style.borderColor = inputFieldColour;
         }
         console.log(`Answer correct: ${allCorrect}`);
-        if (!allCorrect) {
-            alert(`Incorrect, the punchline was: ${currentPunchline}`);
-        } else {
+        if (allCorrect) {
             score++;
             updateScoreDisplay();
+        } else {
+            alert(`🙁 Incorrect, the punchline was:\n${currentPunchline}`);
         }
     }
 
