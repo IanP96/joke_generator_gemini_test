@@ -87,6 +87,7 @@ time
 to
 two
 up
+us
 use
 very
 want
@@ -103,6 +104,15 @@ would
 year
 you
 your`.split("\n");
+
+/** Jokes from non-AI sources to throw in the mix */
+let customJokes = [
+    // courtesy of an anonymous contributor
+    "What do you call a one-eyed dinosaur? A do-you-think-he-saw-us!"
+];
+
+/** How often to use custom jokes as a proportion */
+const CUSTOM_JOKE_FREQUENCY = 0.01;
 
 const LETTER_REGEX = /([a-z]+)/gi;
 
@@ -138,14 +148,23 @@ async function setupChat() {
 }
 
 /**
- * Ask Gemini for a joke and return it
+ * Ask Gemini for a joke and return it. Alternatively, on occasion, return a custom joke.
  * @param {object} chat the current chat with Gemini
  * @returns {string} the full text of the joke, with leading/trailing whitespace removed
  */
 async function getJokeText(chat) {
-    const result = await chat.sendMessage(JOKE_PROMPT);
-    const jokeText = result.response.text().trim();
-    console.log(`Joke received: ${jokeText}`);
+    let jokeText;
+    if (Math.random() < CUSTOM_JOKE_FREQUENCY && customJokes.length) {
+        // Use a custom joke
+        const index = Math.floor(Math.random() * customJokes.length);
+        jokeText = customJokes.splice(index, 1)[0];
+        console.log(`Custom joke used: ${jokeText}`);
+    } else {
+        // Use a joke from Gemini
+        const result = await chat.sendMessage(JOKE_PROMPT);
+        jokeText = result.response.text().trim();
+        console.log(`Joke received from Gemini: ${jokeText}`);
+    }
     return jokeText;
 }
 
