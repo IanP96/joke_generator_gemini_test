@@ -188,7 +188,7 @@ function getWordsToHide(words, score) {
     if (!uncommonWords) {
         // No uncommon words, just return the longest one
         console.log("No uncommon words");
-        return words.reduce((a, b) => numLetters(a) > numLetters(b) ? a : b, "");
+        return [words.reduce((a, b) => numLetters(a) > numLetters(b) ? a : b, "")];
     }
 
     // Calculate how many words to add by considering the length of the words and calculating a desired number of letters
