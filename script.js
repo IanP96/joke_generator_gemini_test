@@ -237,6 +237,22 @@ function getWordsToHide(words, score) {
 }
 
 /**
+ * Check if local storage is available by trying to store some test data.
+ * Loosely sourced from https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+ * @returns {boolean} true if local storage available, false otherwise
+ */
+function localStorageAvailable() {
+    try {
+        const testData = "test";
+        localStorage.setItem(testData, testData);
+        localStorage.removeItem(testData);
+        return true;
+    } catch (e) {
+        return false;
+    } 
+}
+
+/**
  * A field where the player inputs a letter to complete the punchline
  */
 class InputField {
@@ -258,12 +274,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const setupPara = document.getElementById("setup-p");
     const punchlineDiv = document.getElementById("punchline-div");
     const jokeBtn = document.getElementById("joke-btn");
-    const scorePara = document.getElementById("score-p");
+    const scoreDisplay = document.getElementById("score");
+    const highScoreDisplay = document.getElementById("high-score");
 
     let status = GameStatus.NOT_STARTED;
     let inputFields = [];
     let currentPunchline;
     let score = 0;
+    const useHighScore = localStorageAvailable();
 
     /**
      * Set the button's appearance, visibility and focus
@@ -360,10 +378,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /**
-     * Set the score label based on the current score e.g. "Score: 0"
+     * Set the score and high score labels based on the current score e.g. "Score: 0". Update value of highScore in local storage if needed.
      */
-    function updateScoreDisplay() {
-        scorePara.innerHTML = `Score: ${score}`;
+    function updateScore() {
+        scoreDisplay.innerHTML = `Score: ${score}`;
+        if (useHighScore) {
+            const prevHighScore = Number(localStorage.getItem("highScore"));
+            let newHighScore;
+            if (score > prevHighScore) {
+                newHighScore = score;
+                localStorage.setItem("highScore", newHighScore);
+            } else {
+                newHighScore = prevHighScore;
+            }
+            highScoreDisplay.innerHTML = ` | High score: ${newHighScore}`;
+        }
     }
 
     /**
@@ -388,7 +417,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(`Answer correct: ${allCorrect}`);
         if (allCorrect) {
             score++;
-            updateScoreDisplay();
+            updateScore();
         } else {
             alert(`🙁 Incorrect, the punchline was:\n${currentPunchline}`);
         }
@@ -428,6 +457,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Code to be ran initially. Needs an async as we need to wait for the chat to be set up
     ( async () => {
         setBtn(false);
+        console.log(`Local storage available: ${useHighScore}`);
+        updateScore();
         const chat = await setupChat();
         setBtn(true, "Generate joke", true);
         setupPara.innerHTML = "Click the button below to get started.";
