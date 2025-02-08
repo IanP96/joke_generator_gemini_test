@@ -381,7 +381,7 @@ document.addEventListener("DOMContentLoaded", function () {
      * Set the score and high score labels based on the current score e.g. "Score: 0". Update value of highScore in local storage if needed.
      */
     function updateScore() {
-        scoreDisplay.innerHTML = `Score: ${score}`;
+        scoreDisplay.innerHTML = `Current streak: ${score}`;
         if (useHighScore) {
             const prevHighScore = Number(localStorage.getItem("highScore"));
             let newHighScore;
@@ -391,7 +391,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 newHighScore = prevHighScore;
             }
-            highScoreDisplay.innerHTML = ` | High score: ${newHighScore}`;
+            highScoreDisplay.innerHTML = ` | Highest streak: ${newHighScore}`;
         }
     }
 
@@ -419,6 +419,8 @@ document.addEventListener("DOMContentLoaded", function () {
             score++;
             updateScore();
         } else {
+            score = 0;
+            updateScore();
             alert(`🙁 Incorrect, the punchline was:\n${currentPunchline}`);
         }
     }
