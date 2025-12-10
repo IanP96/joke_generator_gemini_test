@@ -108,13 +108,14 @@ your`.split("\n");
 /** Jokes from non-AI sources to throw in the mix */
 let customJokes = [
     // courtesy of an anonymous contributor
-    "What do you call a one-eyed dinosaur? A do-you-think-he-saw-us!"
+    "What do you call a one-eyed dinosaur? A do-you-think-he-saw-us!",
 ];
 
 /** How often to use custom jokes as a proportion */
 const CUSTOM_JOKE_FREQUENCY = 0.01;
 
 const LETTER_REGEX = /([a-z]+)/gi;
+const GEMINI_MODEL_NAME = "gemini-2.0-flash";
 
 /**
  * Prompt given to Gemini to generate jokes.
@@ -131,7 +132,7 @@ const JOKE_PROMPT = `Tell me a new joke.
 const GameStatus = {
     NOT_STARTED: 0,
     JOKE_GIVEN: 1,
-    RESULT_GIVEN: 2
+    RESULT_GIVEN: 2,
 };
 
 /**
@@ -140,9 +141,9 @@ const GameStatus = {
  */
 async function setupChat() {
     const genAI = await new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = await genAI.getGenerativeModel({ model: GEMINI_MODEL_NAME });
     const chat = model.startChat({
-        history: []
+        history: [],
     });
     return chat;
 }
@@ -201,25 +202,27 @@ function numLetters(str) {
  * @returns {string[]} list of words to hide
  */
 function getWordsToHide(words, score) {
-
-    const uncommonWords = words
-    .filter(word => word.match(LETTER_REGEX) && !COMMON_WORDS.includes(word.toLowerCase()));
+    const uncommonWords = words.filter(
+        (word) => word.match(LETTER_REGEX) && !COMMON_WORDS.includes(word.toLowerCase())
+    );
     if (!uncommonWords) {
         // No uncommon words, just return the longest one
         console.log("No uncommon words");
-        return [words.reduce((a, b) => numLetters(a) > numLetters(b) ? a : b, "")];
+        return [words.reduce((a, b) => (numLetters(a) > numLetters(b) ? a : b), "")];
     }
 
     // Calculate how many words to add by considering the length of the words and calculating a desired number of letters
     const wordLengths = uncommonWords
-    .map(word => {return {length: numLetters(word), word}})
-    .sort((a, b) => a.length - b.length)
-    .reverse();
+        .map((word) => {
+            return { length: numLetters(word), word };
+        })
+        .sort((a, b) => a.length - b.length)
+        .reverse();
     console.log(wordLengths);
     /** Total length of all uncommon words */
     const totalLength = wordLengths.reduce((a, b) => a + b.length, 0);
     /** starts at 0.1, tends to 1 as score increases */
-    const coeff = -0.9 * 1.1 ** (-score) + 1;
+    const coeff = -0.9 * 1.1 ** -score + 1;
     const lengthThreshold = totalLength * coeff;
     console.log(`length threshold: ${lengthThreshold} / ${totalLength}`);
 
@@ -249,14 +252,13 @@ function localStorageAvailable() {
         return true;
     } catch (e) {
         return false;
-    } 
+    }
 }
 
 /**
  * A field where the player inputs a letter to complete the punchline
  */
 class InputField {
-
     /** This field's HTMLElement */
     node;
     /** The correct character that goes in this field (in lowercase) */
@@ -270,7 +272,6 @@ class InputField {
 
 // Only try to access DOM elements once loading complete (avoid null exceptions)
 document.addEventListener("DOMContentLoaded", function () {
-
     const setupPara = document.getElementById("setup-p");
     const punchlineDiv = document.getElementById("punchline-div");
     const jokeBtn = document.getElementById("joke-btn");
@@ -304,7 +305,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function fillJoke(chat) {
-
         setupPara.innerHTML = "Loading the next joke...";
         punchlineDiv.innerHTML = "";
         inputFields = [];
@@ -313,11 +313,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const jokeText = await getJokeText(chat);
 
         // Get the index of the joke string that divides it into setup and punchline
-        const sentenceIndex = Math.min(
-            ...[".", "?", "!"]
-            .map(punc => jokeText.indexOf(punc))
-            .filter(index => index !== -1)
-        ) + 1;
+        const sentenceIndex =
+            Math.min(
+                ...[".", "?", "!"]
+                    .map((punc) => jokeText.indexOf(punc))
+                    .filter((index) => index !== -1)
+            ) + 1;
 
         const setup = jokeText.substring(0, sentenceIndex);
         console.log(`setup: ${setup}`);
@@ -371,7 +372,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         document.getElementById(`input-${inputCount - 1}`).addEventListener("input", () => {
             jokeBtn.focus();
-        })
+        });
 
         punchlineDiv.classList.remove("hidden");
         currentPunchline = punchline;
@@ -433,12 +434,10 @@ document.addEventListener("DOMContentLoaded", function () {
      */
     async function jokeBtnClicked(chat) {
         switch (status) {
-
             case GameStatus.NOT_STARTED:
             case GameStatus.RESULT_GIVEN:
                 setBtn(false);
                 await fillJoke(chat);
-
                 status = GameStatus.JOKE_GIVEN;
                 setBtn(true, "Submit guess");
                 break;
@@ -457,7 +456,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Code to be ran initially. Needs an async as we need to wait for the chat to be set up
-    ( async () => {
+    (async () => {
         setBtn(false);
         console.log(`Local storage available: ${useHighScore}`);
         updateScore();
@@ -465,6 +464,5 @@ document.addEventListener("DOMContentLoaded", function () {
         setBtn(true, "Generate joke", true);
         setupPara.innerHTML = "Click the button below to get started.";
         jokeBtn.addEventListener("click", () => jokeBtnClicked(chat));
-    } )();
-
+    })();
 });
