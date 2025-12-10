@@ -1,5 +1,3 @@
-
-
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 // Words source: https://www.ef-australia.com.au/english-resources/english-vocabulary/top-100-words/
