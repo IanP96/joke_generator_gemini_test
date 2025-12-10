@@ -6,7 +6,7 @@ How well do you know your dad jokes?
 
 Complete the punchline is an online game where AI generates jokes and you have to complete the punchline.
 
-Powered by Google Gemini Flash 1.5.
+Powered by Google Gemini 2.0 Flash.
 
 ## How to play
 

@@ -134,7 +134,7 @@ const GameStatus = {
 };
 
 /**
- * Sets up Gemini (1.5 Flash) and starts a new chat with no history
+ * Sets up Gemini and starts a new chat with no history
  * @returns a new chat with no history
  */
 async function setupChat() {
