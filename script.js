@@ -113,7 +113,7 @@ let customJokes = [
 const CUSTOM_JOKE_FREQUENCY = 0.01;
 
 const LETTER_REGEX = /([a-z]+)/gi;
-const GEMINI_MODEL_NAME = "gemini-2.0-flash";
+const GEMINI_MODEL_NAME = "gemini-2.5-flash-lite";
 
 /**
  * Prompt given to Gemini to generate jokes.
